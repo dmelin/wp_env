@@ -11,11 +11,15 @@
 class wp_env
 {
     private $envFile;
+    public $hasEnv;
+    public $envDisabledReason;
 
     public function __construct()
     {
         $envPath = realpath(dirname(ABSPATH));
         $this->envFile = $envPath . '/.env';
+        $this->hasEnv = false;
+
         add_action('admin_menu', array($this, 'admin_menu'));
     }
     public function save()
@@ -114,4 +118,19 @@ function wpEnv($key = false)
 {
     global $wpEnv;
     return $wpEnv->env($key);
+}
+
+if (!function_exists('env')) {
+    if (!wpEnv('USE_ENV')) {
+        $wpEnv->hasEnv = true;
+        function env($key = false)
+        {
+            global $wpEnv;
+            return $wpEnv->env($key);
+        }
+    } else {
+        $wpEnv->envDisabledReason = 'Disabled in .env file';
+    }
+} else {
+    $wpEnv->envDisabledReason = 'Function name already in use';
 }
